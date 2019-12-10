@@ -5,7 +5,7 @@ from sklearn.preprocessing import LabelEncoder
 
 class SlicedDataGenerator(tf.keras.utils.Sequence):
 
-    def __init__(self, trainedEncoder, shuffled_indexes, labels, batch_size=10, dim=(10, 15), n_channels=1,
+    def __init__(self, trained_encoder, shuffled_indexes, labels, batch_size=10, dim=(10, 15), n_channels=1,
                  n_classes=26, shuffle=True):
         'Initialization'
         self.dim = dim
@@ -16,7 +16,7 @@ class SlicedDataGenerator(tf.keras.utils.Sequence):
         self.n_classes = n_classes
         self.shuffle = shuffle
         self.on_epoch_end()
-        self.encoder = trainedEncoder
+        self.encoder = trained_encoder
 
     def __len__(self):
         'Denotes the number of batches per epoch'
@@ -37,9 +37,9 @@ class SlicedDataGenerator(tf.keras.utils.Sequence):
 
     def on_epoch_end(self):
         'Updates indexes after each epoch'
-        self.indexes = np.arange(len(self.list_IDs))
-        if self.shuffle == True:
-            np.random.shuffle(self.indexes)
+#        self.indexes = np.arange(len(self.list_IDs))
+#        if self.shuffle == True:
+#        np.random.shuffle(self.indexes)
 
     def __data_generation(self, shuffled_indexes_batch):
         'Generates data containing batch_size samples'  # X : (n_samples, *dim, n_channels)
@@ -50,7 +50,7 @@ class SlicedDataGenerator(tf.keras.utils.Sequence):
         # Generate data
         rows_to_skip = set(self.shuffled_indexes) - set(shuffled_indexes_batch)
         data_batch = pd.read_csv('data/featureset.csv', skiprows=rows_to_skip)
-        X =data_batch.drop(columns=["DATASET", "SENTENCE_ID"])
-        y=data_batch[['USER_ID']]
+        X = data_batch.drop(columns=["DATASET", "SENTENCE_ID", 'USER_ID'])
+        y = data_batch[['USER_ID']]
 
-        return X, tf.keras.utils.to_categorical(y, num_classes=self.n_classes)
+        return X, tf.keras.utils.to_categorical(self.encoder.transform(y), num_classes=self.n_classes)
