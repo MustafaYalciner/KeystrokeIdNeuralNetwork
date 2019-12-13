@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow.keras.backend as K
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+
 from sklearn.neural_network import MLPClassifier
 
 
@@ -19,13 +20,13 @@ class Main:
         random.shuffle(ALL_INDICES)
         pd.set_option('display.max_columns', None)
         pd.set_option('display.width', 200)
-        data = pd.read_csv('data/output.csv', nrows=10000)
+        data = pd.read_csv('data/output.csv', nrows=200000)
         data = data.drop(columns=["DATASET", "SENTENCE_ID"])
-        train, test = train_test_split(data, test_size=0.01)
+        train, test = train_test_split(data, test_size=0.01, shuffle=True)
 
-        train_current_key_code=pd.get_dummies(train['KEYCODE'],prefix='current')
-        train_prev_current_key_code=pd.get_dummies(train['KEYCODE_PREV'], prefix='prev')
-        train_tri_current_key_code=pd.get_dummies(train['KEYCODE_TRI'], prefix='tri')
+        train_current_key_code=pd.get_dummies(train['KEYCODE'], prefix='current')
+        train_prev_current_key_code= pd.get_dummies(train['KEYCODE_PREV'], prefix='prev')
+        train_tri_current_key_code= pd.get_dummies(train['KEYCODE_TRI'], prefix='tri')
 
         train = train.drop(columns=["KEYCODE", "KEYCODE_PREV", "KEYCODE_TRI"])
         train = train.join(train_current_key_code)
@@ -39,10 +40,10 @@ class Main:
         encoder = LabelEncoder()
         encoder.fit(usersToTrainLabelEncoder)
         # convert integers to dummy variables (i.e. one hot encoded)
-        train_sol = tf.keras.utils.to_categorical(encoder.transform(train_sol))
+        train_sol = pd.get_dummies(encoder.transform(train_sol))
 
         # convert integers to dummy variables (i.e. one hot encoded)
-        test_sol = tf.keras.utils.to_categorical(encoder.transform(test_sol))
+        test_sol = pd.get_dummies(encoder.transform(test_sol))
 
         train_data = train.drop(columns=["USER_ID"])
         test_data = test.drop(columns=["USER_ID"])
@@ -63,12 +64,12 @@ class Main:
         model.add(tf.keras.layers.Dense(10, activation='relu'))
         model.add(tf.keras.layers.Dropout(0.5))
         model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dense(46, activation='softmax'))
+        model.add(tf.keras.layers.Dense(53, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
                       optimizer='sgd',
                       metrics=[tf.keras.metrics.CategoricalAccuracy()])
 #       mlp.fit(train_data,train_sol)
-        model.fit(train_data, train_sol, validation_split=0.1, epochs=20)
+        model.fit(train_data, train_sol, validation_split=0.01, epochs=20)
         #test_prediction = model.predict(test_data, steps=1)
 
 #https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly
